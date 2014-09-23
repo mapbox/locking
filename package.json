@@ -1,0 +1,23 @@
+{
+  "name": "locking",
+  "description": "Read I/O locking using LRU cache",
+  "author": {
+    "name": "Mapbox",
+    "email": "info@mapbox.com",
+    "url": "http://mapbox.com/"
+  },
+  "version": "0.0.0",
+  "main": "./index",
+  "engines": {
+    "node": "0.10.x"
+  },
+  "dependencies": {
+    "lru-cache": "2.5.x"
+  },
+  "devDependencies": {
+    "tape": "3.0.x"
+  },
+  "scripts": {
+    "test": "tape test.js"
+  }
+}
