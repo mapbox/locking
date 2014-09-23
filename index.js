@@ -34,7 +34,7 @@ function Locking(loader, options) {
         // Create a new lock.
         locks[id] = [callback];
 
-        loader(id, function(err, instance, headers) {
+        loader(id, function(err, instance) {
             if (instance) {
                 cacheStats.miss++;
                 cache.set(id, instance);
