@@ -2,13 +2,13 @@ var Locking = require('./index.js');
 var tape = require('tape');
 
 var io = {};
-io.a = 0;
-io.b = 0;
+io['"a"'] = 0;
+io['"b"'] = 0;
 
 // Simulates a read function of the form `read(id, callback)`
 var testRead = function(id, callback) {
     setTimeout(function() {
-        io[id]++;
+        io[JSON.stringify(id)]++;
         callback(null, {id:id});
     }, 100);
 };
@@ -19,10 +19,10 @@ tape('locking singletons', function(t) {
 });
 
 
-tape('accepts URI object as id', function(t) {
+tape('accepts object as id', function(t) {
     var reader = Locking(testRead);
     reader({pathname:'/test'}, function(err, read) {
-        t.deepEqual(read, { id:'/test' }, 'returns read object');
+        t.deepEqual(read, { id: { pathname: '/test' } }, 'returns read object');
         t.end();
     });
 });
@@ -40,8 +40,8 @@ tape('locks io for multiple calls', function(t) {
                 t.deepEqual(data, read, 'data is shared amongst locked reader callbacks');
             }
             if (!--remaining) {
-                t.equal(0, reader.cacheStats.hit - hits, '0 LRU cache hits');
-                t.equal(1, io.a, 'single I/O operation for a');
+                t.equal(reader.cacheStats.hit - hits, 0, '0 LRU cache hits');
+                t.equal(io['"a"'], 1, 'single I/O operation for a');
                 t.end();
             }
         });
@@ -57,8 +57,8 @@ tape('uses LRU for subsequent calls', function(t) {
             reader('b', function(err, read) {
                 t.deepEqual(data, read, 'data is shared amongst locked reader callbacks');
                 if (!--remaining) {
-                    t.equal(10, reader.cacheStats.hit - hits, '10 LRU cache hits');
-                    t.equal(1, io.b, 'single I/O operation for b');
+                    t.equal(reader.cacheStats.hit - hits, 10, '10 LRU cache hits');
+                    t.equal(io['"b"'], 1, 'single I/O operation for b');
                     t.end();
                 }
             });
