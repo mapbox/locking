@@ -1,6 +1,8 @@
 locking
 -------
 
+[![Build Status](https://travis-ci.org/mapbox/node-locking.svg?branch=master)](https://travis-ci.org/mapbox/node-locking)
+
 Wraps any loader function of the form `loader(id, callback)` to use
 an LRU cache and lock I/O operations across concurrent calls.
 
