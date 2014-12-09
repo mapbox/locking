@@ -18,30 +18,30 @@ function Locking(loader, options) {
     var locks = {};
     var cacheStats = { hit:0, miss:0, mchit:0, mcmiss:0 };
     var cacher = function(id, callback) {
-        // Stringify uri objects.
-        if (typeof id !== 'string') id = url.format(id);
+        // Stringify objects.
+        var key = JSON.stringify(id);
 
         // Instance is in LRU cache.
-        var cached = cache.get(id);
+        var cached = cache.get(key);
         if (cached) {
             cacheStats.hit++;
             return callback(null, cached);
         }
 
         // Previous instance creation is in progress (locking).
-        if (locks[id]) return locks[id].push(callback);
+        if (locks[key]) return locks[key].push(callback);
 
         // Create a new lock.
-        locks[id] = [callback];
+        locks[key] = [callback];
 
         loader(id, function(err, instance) {
             if (instance) {
                 cacheStats.miss++;
-                cache.set(id, instance);
+                cache.set(key, instance);
             }
 
-            var q = locks[id];
-            delete locks[id];
+            var q = locks[key];
+            delete locks[key];
             for (var i = 0; i < q.length; i++) {
                 q[i](err, instance);
             }
