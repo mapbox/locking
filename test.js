@@ -1,6 +1,8 @@
 var Locking = require('./index.js');
 var tape = require('tape');
 
+var doc = {};
+
 var io = {};
 io['"a"'] = 0;
 io['"b"'] = 0;
@@ -9,18 +11,21 @@ io['"b"'] = 0;
 var testRead = function(id, callback) {
     setTimeout(function() {
         io[JSON.stringify(id)]++;
-        callback(null, {id:id});
+        var data = JSON.parse(JSON.stringify(doc));
+        data.id = id;
+        callback(null, data);
     }, 100);
 };
 
+var reader = Locking(testRead, { maxAge: 2e3 });
+
 tape('locking singletons', function(t) {
-    t.equal(Locking(testRead), Locking(testRead), 'singletons locking instances');
+    t.equal(reader, Locking(testRead, { maxAge:2e3 }), 'singletons locking instances');
     t.end();
 });
 
 
 tape('accepts object as id', function(t) {
-    var reader = Locking(testRead);
     reader({pathname:'/test'}, function(err, read) {
         t.deepEqual(read, { id: { pathname: '/test' } }, 'returns read object');
         t.end();
@@ -28,7 +33,6 @@ tape('accepts object as id', function(t) {
 });
 
 tape('locks io for multiple calls', function(t) {
-    var reader = Locking(testRead);
     var hits = reader.cacheStats.hit;
     var remaining = 10;
     var data;
@@ -49,7 +53,6 @@ tape('locks io for multiple calls', function(t) {
 });
 
 tape('uses LRU for subsequent calls', function(t) {
-    var reader = Locking(testRead);
     var hits = reader.cacheStats.hit;
     reader('b', function(err, data) {
         var remaining = 10;
@@ -64,5 +67,22 @@ tape('uses LRU for subsequent calls', function(t) {
             });
         }
     });
+});
+
+tape('gets stale doc before change + cache expiration', function(t) {
+    reader('b', function(err, read) {
+        t.deepEqual(read, {id:'b'});
+        t.end();
+    });
+});
+
+tape('gets fresh doc after change + cache expiration', function(t) {
+    doc.extra = true;
+    setTimeout(function() {
+        reader('b', function(err, read) {
+            t.deepEqual(read, {id:'b', extra:true});
+            t.end();
+        });
+    }, 3000);
 });
 
