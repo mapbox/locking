@@ -22,7 +22,7 @@ function Locking(loader, options) {
         var key = JSON.stringify(id);
 
         // Instance is in LRU cache.
-        var cached = cache.get(key);
+        var cached = cache.peek(key);
         if (cached) {
             cacheStats.hit++;
             return callback(null, cached);
