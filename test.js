@@ -17,10 +17,10 @@ var testRead = function(id, callback) {
     }, 100);
 };
 
-var reader = Locking(testRead, { maxAge: 2e3 });
+var reader = Locking(testRead, { maxAge: 1e3 });
 
 tape('locking singletons', function(t) {
-    t.equal(reader, Locking(testRead, { maxAge:2e3 }), 'singletons locking instances');
+    t.equal(reader, Locking(testRead, { maxAge:1e3 }), 'singletons locking instances');
     t.end();
 });
 
@@ -69,20 +69,24 @@ tape('uses LRU for subsequent calls', function(t) {
     });
 });
 
-tape('gets stale doc before change + cache expiration', function(t) {
-    reader('b', function(err, read) {
-        t.deepEqual(read, {id:'b'});
-        t.end();
-    });
-});
-
-tape('gets fresh doc after change + cache expiration', function(t) {
-    doc.extra = true;
-    setTimeout(function() {
+tape('interval check', function(t) {
+    var counter = 4;
+    var interval = setInterval(function() {
         reader('b', function(err, read) {
-            t.deepEqual(read, {id:'b', extra:true});
-            t.end();
+            if (doc.extra) {
+                t.deepEqual(read, {id:'b', extra:true}, 'reads updated doc');
+            } else {
+                t.deepEqual(read, {id:'b'}, 'reads cached doc');
+            }
+            if (!--counter) {
+                clearInterval(interval);
+                t.end();
+            }
         });
-    }, 3000);
+    }, 750);
+    setTimeout(function() {
+        t.ok(true, 'updates doc');
+        doc.extra = true;
+    }, 1500);
 });
 
