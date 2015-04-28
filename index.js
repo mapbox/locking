@@ -1,14 +1,19 @@
-// Wraps any loader function of the form `loader(id, callback)` to use
-// an LRU cache and lock I/O operations across concurrent calls.
-
-var url = require('url');
-var lru = require('lru-cache');
 var loaders = [];
 var cachers = [];
 
-module.exports = Locking;
+module.exports = locking;
 
-function Locking(loader, options) {
+/**
+ * Wraps any loader function of the form `loader(id, callback)` to use
+ * an LRU cache and lock I/O operations across concurrent calls.
+ *
+ * @param {Function} loader any asynchronous function that takes
+ * a callback as its last argument.
+ * @param {Object} options passed to the lru-cache instance
+ * @returns {Function} a version of that function that locks on successive
+ * simultaneous calls.
+ */
+function locking(loader, options) {
     var existing = loaders.indexOf(loader);
     if (existing !== -1) return cachers[existing];
 
@@ -53,4 +58,3 @@ function Locking(loader, options) {
     cachers.push(cacher);
     return cacher;
 }
-

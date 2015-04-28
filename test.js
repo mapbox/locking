@@ -1,4 +1,4 @@
-var Locking = require('./index.js');
+var locking = require('./index.js');
 var tape = require('tape');
 
 var doc = {};
@@ -17,10 +17,10 @@ var testRead = function(id, callback) {
     }, 100);
 };
 
-var reader = Locking(testRead, { maxAge: 1e3 });
+var reader = locking(testRead, { maxAge: 1e3 });
 
 tape('locking singletons', function(t) {
-    t.equal(reader, Locking(testRead, { maxAge:1e3 }), 'singletons locking instances');
+    t.equal(reader, locking(testRead, { maxAge:1e3 }), 'singletons locking instances');
     t.end();
 });
 

@@ -19,5 +19,9 @@
   },
   "scripts": {
     "test": "tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:mapbox/node-locking.git"
   }
 }
