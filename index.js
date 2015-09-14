@@ -40,7 +40,7 @@ function locking(loader, options) {
         locks[key] = [callback];
 
         loader(id, function(err, instance) {
-            if (instance) {
+            if (!err && instance) {
                 cacheStats.miss++;
                 cache.set(key, instance);
             }

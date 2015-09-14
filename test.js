@@ -14,6 +14,10 @@ var testRead = function(id, callback) {
         io[JSON.stringify(id)]++;
         var data = JSON.parse(JSON.stringify(doc));
         data.id = id;
+        // This purposefully simulates an I/O source that passes an error
+        // object *and* futher args to the callback. While most I/O functions
+        // don't pass anything beyond an error on failures when they do we
+        // need to bypass caching.
         if (id === 'err') {
             callback(new Error('read fail'), data);
         } else {
