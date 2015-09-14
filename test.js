@@ -6,6 +6,7 @@ var doc = {};
 var io = {};
 io['"a"'] = 0;
 io['"b"'] = 0;
+io['"err"'] = 0;
 
 // Simulates a read function of the form `read(id, callback)`
 var testRead = function(id, callback) {
@@ -13,7 +14,15 @@ var testRead = function(id, callback) {
         io[JSON.stringify(id)]++;
         var data = JSON.parse(JSON.stringify(doc));
         data.id = id;
-        callback(null, data);
+        // This purposefully simulates an I/O source that passes an error
+        // object *and* futher args to the callback. While most I/O functions
+        // don't pass anything beyond an error on failures when they do we
+        // need to bypass caching.
+        if (id === 'err') {
+            callback(new Error('read fail'), data);
+        } else {
+            callback(null, data);
+        }
     }, 100);
 };
 
@@ -28,6 +37,24 @@ tape('locking singletons', function(t) {
 tape('accepts object as id', function(t) {
     reader({pathname:'/test'}, function(err, read) {
         t.deepEqual(read, { id: { pathname: '/test' } }, 'returns read object');
+        t.end();
+    });
+});
+
+tape('passes errors', function(t) {
+    reader('err', function(err, read) {
+        t.equal(err.toString(), 'Error: read fail');
+        t.deepEqual(read, { id: 'err' });
+        t.deepEqual(io['"err"'], 1, 'iops: 1');
+        t.end();
+    });
+});
+
+tape('does not cache object on errors', function(t) {
+    reader('err', function(err, read) {
+        t.equal(err.toString(), 'Error: read fail');
+        t.deepEqual(read, { id: 'err' });
+        t.deepEqual(io['"err"'], 2, 'iops: 2');
         t.end();
     });
 });
