@@ -12,7 +12,7 @@
     "node": "0.10.x"
   },
   "dependencies": {
-    "lru-cache": "2.5.x"
+    "lru-cache": "^4.0.1"
   },
   "devDependencies": {
     "tape": "3.0.x",
