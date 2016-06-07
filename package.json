@@ -12,9 +12,9 @@
     "lru-cache": "^4.0.1"
   },
   "devDependencies": {
-    "tape": "3.0.x",
-    "eslint": "~1.00.0",
-    "eslint-config-unstyled": "^1.1.0"
+    "eslint": "^2.11.1",
+    "eslint-config-unstyled": "^1.1.0",
+    "tape": "^4.5.1"
   },
   "scripts": {
     "test": "eslint index.js && tape test.js"
