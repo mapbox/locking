@@ -1,5 +1,5 @@
 {
-  "name": "locking",
+  "name": "@mapbox/locking",
   "description": "Read I/O locking using LRU cache",
   "author": {
     "name": "Mapbox",
