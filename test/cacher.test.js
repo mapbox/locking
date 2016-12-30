@@ -1,4 +1,4 @@
-var locking = require('./index.js');
+var locking = require('../index.js');
 var tape = require('tape');
 
 var doc = {};

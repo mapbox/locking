@@ -17,7 +17,7 @@
     "tape": "^4.5.1"
   },
   "scripts": {
-    "test": "eslint index.js && tape test.js"
+    "test": "eslint index.js && tape test/*.test.js"
   },
   "repository": {
     "type": "git",
