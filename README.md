@@ -19,14 +19,7 @@ for (var i = 0; i < 10; i++) {
 }
 ```
 
-### Usage
-
-```js
-var options = {};
-var lockingReader = Locking(reader, options);
-```
-
-`options` is passed directly to `lru-cache` (https://github.com/isaacs/node-lru-cache/blob/f25bdae0b4bb0166a75fa01d664a3e3cece1ce98/README.md#options) allowing you to set the max age, max items, and other behaviors of the LRU cache.
+`options` is passed directly to [lru-cache](https://github.com/isaacs/node-lru-cache/blob/f25bdae0b4bb0166a75fa01d664a3e3cece1ce98/README.md#options) allowing you to set the max age, max items, and other behaviors of the LRU cache.
 
 When `options.stale` is set to `true` the locking cache implements additional behavior to continue serving a stale item until the item has been refreshed in the background.
 
