@@ -1,5 +1,6 @@
 var loaders = [];
 var cachers = [];
+var LRU = require('lru-cache');
 
 module.exports = locking;
 
@@ -19,7 +20,7 @@ function locking(loader, options) {
 
     options = options || { max: 100, maxAge: 30e3 };
 
-    var cache = require('lru-cache')(options);
+    var cache = new LRU(options);
     var locks = {};
     var cacheStats = { hit:0, miss:0, mchit:0, mcmiss:0 };
     var cacher = options.stale ?
@@ -112,4 +113,3 @@ function createCacher(cache, locks, cacheStats, loader) {
         });
     };
 }
-
