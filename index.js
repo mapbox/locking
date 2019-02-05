@@ -105,10 +105,12 @@ function createCacher(cache, locks, cacheStats, loader) {
                 cache.set(key, instance);
             }
 
-            var q = locks[key];
-            delete locks[key];
-            for (var i = 0; i < q.length; i++) {
-                q[i](err, instance);
+            if (locks[key]) {
+                var q = locks[key];
+                delete locks[key];
+                for (var i = 0; i < q.length; i++) {
+                    q[i](err, instance);
+                }
             }
         });
     };
