@@ -23,3 +23,6 @@ for (var i = 0; i < 10; i++) {
 
 When `options.stale` is set to `true` the locking cache implements additional behavior to continue serving a stale item until the item has been refreshed in the background.
 
+See also:
+
+ - https://github.com/isaacs/async-cache
