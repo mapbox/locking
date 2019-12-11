@@ -37,8 +37,8 @@ function createStaleCacher(cache, locks, cacheStats, loader) {
     return function(id, callback) {
         // Stringify objects.
         var key = JSON.stringify(id);
-
-        // Instance is in LRU cache.
+        (!loader.name) ? lockedFunction = 'tlMapbox' : lockedFunction = loader.name;
+        console.log('Stale -', lockedFunction, 'length:', cache.length, 'max:', cache.max, 'cacheStats.hit:', cacheStats.hit, 'cacheStats.miss:', cacheStats.miss);        // Instance is in LRU cache.
         var cached = cache.get(key);
         if (cached) {
             cacheStats.hit++;
@@ -85,6 +85,9 @@ function createCacher(cache, locks, cacheStats, loader) {
     return function(id, callback) {
         // Stringify objects.
         var key = JSON.stringify(id);
+        let lockedFunction;
+        (!loader.name) ? lockedFunction = 'tlMapbox' : lockedFunction = loader.name;
+        console.log('Not Stale -', lockedFunction, 'length:', cache.length, 'max:', cache.max, 'cacheStats.hit:', cacheStats.hit, 'cacheStats.miss:', cacheStats.miss);
 
         // Instance is in LRU cache.
         var cached = cache.get(key);
