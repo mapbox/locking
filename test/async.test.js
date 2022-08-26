@@ -3,6 +3,14 @@
 const got = require('got');
 const { LockingAsync } = require('../index.js');
 
+const sleep = (time) => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      return resolve();
+    }, time);
+  });
+};
+
 describe('Locking', () => {
   it('fails without provided async method', () => {
     expect(() => {
@@ -151,6 +159,23 @@ describe('Locking', () => {
     expect(httpFetch.mock.calls.length).toBe(1);
   });
 
+  it('allowStale: true', async () => {
+    const obj = { some: 'data' };
+    const func = jest.fn(() => {
+      return Promise.resolve(obj);
+    });
+
+    const locker = new LockingAsync(func, { ttl: 500, max: 10, allowStale: true });
+    expect(await locker.get('hello')).toMatchObject({ some: 'data' });
+    expect(await locker.get('hello')).toMatchObject({ some: 'data' });
+    expect(func.mock.calls.length).toBe(1);
+    expect(locker.stats).toHaveProperty('refreshHit', 0);
+    obj.more = 'info';
+    await sleep(501);
+    expect(await locker.get('hello')).toMatchObject({ some: 'data', more: 'info' });
+    expect(locker.stats).toHaveProperty('refreshHit', 1);
+  });
+
   it('stats', async () => {
     const func = jest.fn((id) => {
       return Promise.resolve(id);
@@ -182,9 +207,6 @@ describe('Locking', () => {
 
     const locker = new LockingAsync(ioPromise);
 
-    // calling the i/o function three times concurrently should
-    // result in only a single i/o operation, and therefore the
-    // concurrentCounter should only increment once, not three times.
     await Promise.all([
       locker.get('red'),
       locker.get('red'),

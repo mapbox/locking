@@ -133,12 +133,13 @@ describe('Callback', () => {
           expect(err).toBeFalsy();
           expect(result).toEqual({ some: 'data', more: 'info' });
           expect(testFunc.mock.calls.length).toBe(2);
+          jest.useRealTimers();
         });
       }, 1e3);
     });
   });
 
-  it('stale: true', () => {
+  it('allowStale: true', () => {
     jest.useFakeTimers();
     const obj = { some: 'data' };
     const staleFunc = jest.fn((id, cb) => {
@@ -161,6 +162,7 @@ describe('Callback', () => {
           locker('id', (err, result3) => {
             expect(result3).toMatchObject({ some: 'data', more: 'info' });
             expect(staleFunc.mock.calls.length).toBe(2);
+            jest.useRealTimers();
           });
         }, 2000);
       });
