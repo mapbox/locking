@@ -11,6 +11,7 @@
   - `stale` is now `allowStale`
   - `maxAge` is now `ttl`
 - use jest as a test runner
+- test on node 14 & 16, drop node 10 & 12
 
 ## v3.3.0
 
