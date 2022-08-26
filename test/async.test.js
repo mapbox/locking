@@ -150,4 +150,72 @@ describe('Locking', () => {
     ]);
     expect(httpFetch.mock.calls.length).toBe(1);
   });
+
+  it('stats', async () => {
+    const func = jest.fn((id) => {
+      return Promise.resolve(id);
+    });
+
+    const cache = new LockingAsync(func);
+    expect(await cache.get('id')).toEqual('id');
+    expect(await cache.get('id')).toEqual('id');
+    expect(await cache.get('id')).toEqual('id');
+    expect(await cache.get('id')).toEqual('id');
+    expect(cache.stats).toMatchObject({
+      calls: 4,
+      miss: 1,
+      hit: 3,
+      size: 1,
+      activeLocks: 0,
+      locks: 0
+    });
+  });
+
+  it('stats, i/o', async () => {
+    const ioPromise = jest.fn((a) => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          return resolve(`${a}`);
+        }, 100);
+      });
+    });
+
+    const locker = new LockingAsync(ioPromise);
+
+    // calling the i/o function three times concurrently should
+    // result in only a single i/o operation, and therefore the
+    // concurrentCounter should only increment once, not three times.
+    await Promise.all([
+      locker.get('red'),
+      locker.get('red'),
+      locker.get('red')
+    ]);
+
+    expect(locker.stats).toMatchObject({
+      calls: 3,
+      miss: 3,
+      hit: 0,
+      size: 1,
+      activeLocks: 0,
+      locks: 2
+    });
+  });
+
+  it('stats, activeLocks', async () => {
+    const func = jest.fn((a) => {
+      return new Promise((resolve) => {
+        return resolve(`${a}`);
+      });
+    });
+
+    const locker = new LockingAsync(func);
+    const promises = Promise.all([
+      locker.get('hello'),
+      locker.get('hello')
+    ]);
+
+    expect(locker.stats).toHaveProperty('activeLocks', 2);
+    await promises;
+    expect(locker.stats).toHaveProperty('activeLocks', 0);
+  });
 });
