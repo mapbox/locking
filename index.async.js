@@ -52,7 +52,7 @@ module.exports.Locking = class Locking {
     });
   }
 
-  async call() {
+  async get() {
     const args = [... arguments];
     return new Promise(async (resolve, reject) => {
       const key = this.#createKey(args);
@@ -72,11 +72,10 @@ module.exports.Locking = class Locking {
       // for the same key
       this.#locks[key] = [[resolve, reject]];
 
-      console.log(this.#locks);
-
       // get fresh item and resolve/reject 1 or more locks
       try {
         const result = await this.func(...args);
+        console.log('get results', result);
         this.cache.set(key, result);
         this.#resolveLocks(key, result);
       } catch (err) {

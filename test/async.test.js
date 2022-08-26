@@ -1,6 +1,7 @@
 'use strict';
 
 const test = require('tape');
+const got = require('got');
 const { Locking } = require('../index.async');
 
 describe('Locking', () => {
@@ -16,11 +17,11 @@ describe('Locking', () => {
     });
 
     const locker = new Locking(stub);
-    expect(await locker.call('hello')).toBe('output of hello');
-    expect(await locker.call('hello')).toBe('output of hello');
+    expect(await locker.get('hello')).toBe('output of hello');
+    expect(await locker.get('hello')).toBe('output of hello');
     expect(stub.mock.calls.length).toBe(1);
-    expect(await locker.call('world')).toBe('output of world');
-    expect(await locker.call('world')).toBe('output of world');
+    expect(await locker.get('world')).toBe('output of world');
+    expect(await locker.get('world')).toBe('output of world');
     expect(stub.mock.calls.length).toBe(2);
   });
 
@@ -31,7 +32,7 @@ describe('Locking', () => {
 
     const locker = new Locking(stub);
     try {
-      await locker.call();
+      await locker.get();
       throw new Error('test should not reach here!')
     } catch (err) {
       expect(err.message).toBe('This is an error!');
@@ -55,9 +56,9 @@ describe('Locking', () => {
     // result in only a single i/o operation, and therefore the
     // concurrentCounter should only increment once, not three times.
     const results = await Promise.all([
-      locker.call('red'),
-      locker.call('red'),
-      locker.call('red')
+      locker.get('red'),
+      locker.get('red'),
+      locker.get('red')
     ]);
 
     expect(results).toEqual(['red_1', 'red_1', 'red_1']);
@@ -70,7 +71,7 @@ describe('Locking', () => {
     });
 
     const locker = new Locking(promiseWithStrings);
-    expect(await locker.call('one', 'two', 'three')).toBe('output of one, two, three');
+    expect(await locker.get('one', 'two', 'three')).toBe('output of one, two, three');
   });
 
   it('works with promise function of objects', async () => {
@@ -79,7 +80,7 @@ describe('Locking', () => {
     });
 
     const locker = new Locking(promiseWithObjects);
-    expect(await locker.call({ one: 'one' }, { option: true })).toBe('output of {\"one\":\"one\"}, {\"option\":true}');
+    expect(await locker.get({ one: 'one' }, { option: true })).toBe('output of {\"one\":\"one\"}, {\"option\":true}');
   });
 
   it('works with promise function of numbers', async () => {
@@ -88,7 +89,7 @@ describe('Locking', () => {
     });
 
     const locker = new Locking(promiseWithNumbers);
-    expect(await locker.call(4, 5)).toBe(9);
+    expect(await locker.get(4, 5)).toBe(9);
   });
 
   it('works with promise function of mixed types', async () => {
@@ -97,7 +98,7 @@ describe('Locking', () => {
     });
 
     const locker = new Locking(promiseWithMixed);
-    expect(await locker.call({ option: true }, 1, 'hello')).toBe('output of object, number, string');
+    expect(await locker.get({ option: true }, 1, 'hello')).toBe('output of object, number, string');
   });
 
   it('works with complex promise function', async () => {
@@ -110,7 +111,7 @@ describe('Locking', () => {
     });
 
     const locker = new Locking(timeoutPromise);
-    expect(await locker.call({ option: true }, 1, 'hello')).toEqual({ structured: 'data' });
+    expect(await locker.get({ option: true }, 1, 'hello')).toEqual({ structured: 'data' });
   });
 
   it('evicts old keys', async () => {
@@ -119,12 +120,35 @@ describe('Locking', () => {
     });
 
     const locker = new Locking(stub, { max: 1 });
-    expect(await locker.call('hello')).toBe('output of hello');
-    expect(await locker.call('world')).toBe('output of world');
-    expect(await locker.call('hola')).toBe('output of hola');
-    expect(await locker.call('mundo')).toBe('output of mundo');
+    expect(await locker.get('hello')).toBe('output of hello');
+    expect(await locker.get('world')).toBe('output of world');
+    expect(await locker.get('hola')).toBe('output of hola');
+    expect(await locker.get('mundo')).toBe('output of mundo');
     expect(stub.mock.calls.length).toBe(4);
     expect(locker.cache.size).toBe(1);
     expect(locker.cache.dump()).toEqual([['1119717257625be99c2c5ed29dd1fe31720f9b76', { value: 'output of mundo' }]]);
+  });
+
+  it('real life http', async () => {
+    const httpFetch = jest.fn((url) => {
+      return got(url).json();
+    });
+
+    const cache = new Locking(httpFetch);
+    const responses = await Promise.all([
+      cache.get('https://api.mapbox.com'),
+      cache.get('https://api.mapbox.com'),
+      cache.get('https://api.mapbox.com'),
+      cache.get('https://api.mapbox.com'),
+      cache.get('https://api.mapbox.com')
+    ]);
+    expect(responses).toEqual([
+      { api: 'mapbox' },
+      { api: 'mapbox' },
+      { api: 'mapbox' },
+      { api: 'mapbox' },
+      { api: 'mapbox' }
+    ]);
+    expect(httpFetch.mock.calls.length).toBe(1);
   });
 });
