@@ -1,13 +1,12 @@
 'use strict';
 
-const test = require('tape');
 const got = require('got');
-const { Locking } = require('../index.async');
+const { LockingAsync } = require('../index.js');
 
 describe('Locking', () => {
   it('fails without provided async method', () => {
     expect(() => {
-      new Locking();
+      new LockingAsync();
     }).toThrow(/Locking: locking class requires two arguments: function, params/);
   });
 
@@ -16,7 +15,7 @@ describe('Locking', () => {
       return Promise.resolve(`output of ${input}`);
     });
 
-    const locker = new Locking(stub);
+    const locker = new LockingAsync(stub);
     expect(await locker.get('hello')).toBe('output of hello');
     expect(await locker.get('hello')).toBe('output of hello');
     expect(stub.mock.calls.length).toBe(1);
@@ -30,10 +29,10 @@ describe('Locking', () => {
       return Promise.reject(new Error('This is an error!'));
     });
 
-    const locker = new Locking(stub);
+    const locker = new LockingAsync(stub);
     try {
       await locker.get();
-      throw new Error('test should not reach here!')
+      throw new Error('test should not reach here!');
     } catch (err) {
       expect(err.message).toBe('This is an error!');
       expect(err).toBeInstanceOf(Error);
@@ -41,16 +40,16 @@ describe('Locking', () => {
   });
 
   it('concurrent cache misses use internal locking mechanism', async () => {
-    let counter = 1;
+    const counter = 1;
     const ioPromise = jest.fn((a) => {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         setTimeout(() => {
           return resolve(`${a}_${counter}`);
         }, 100);
-      })
+      });
     });
 
-    const locker = new Locking(ioPromise);
+    const locker = new LockingAsync(ioPromise);
 
     // calling the i/o function three times concurrently should
     // result in only a single i/o operation, and therefore the
@@ -70,7 +69,7 @@ describe('Locking', () => {
       return Promise.resolve(`output of ${a}, ${b}, ${c}`);
     });
 
-    const locker = new Locking(promiseWithStrings);
+    const locker = new LockingAsync(promiseWithStrings);
     expect(await locker.get('one', 'two', 'three')).toBe('output of one, two, three');
   });
 
@@ -79,8 +78,8 @@ describe('Locking', () => {
       return Promise.resolve(`output of ${JSON.stringify(a)}, ${JSON.stringify(b)}`);
     });
 
-    const locker = new Locking(promiseWithObjects);
-    expect(await locker.get({ one: 'one' }, { option: true })).toBe('output of {\"one\":\"one\"}, {\"option\":true}');
+    const locker = new LockingAsync(promiseWithObjects);
+    expect(await locker.get({ one: 'one' }, { option: true })).toBe('output of {"one":"one"}, {"option":true}');
   });
 
   it('works with promise function of numbers', async () => {
@@ -88,7 +87,7 @@ describe('Locking', () => {
       return Promise.resolve(a + b);
     });
 
-    const locker = new Locking(promiseWithNumbers);
+    const locker = new LockingAsync(promiseWithNumbers);
     expect(await locker.get(4, 5)).toBe(9);
   });
 
@@ -97,20 +96,20 @@ describe('Locking', () => {
       return Promise.resolve(`output of ${typeof a}, ${typeof b}, ${typeof c}`);
     });
 
-    const locker = new Locking(promiseWithMixed);
+    const locker = new LockingAsync(promiseWithMixed);
     expect(await locker.get({ option: true }, 1, 'hello')).toBe('output of object, number, string');
   });
 
   it('works with complex promise function', async () => {
-    const timeoutPromise = jest.fn((url) => {
-      return new Promise((resolve, reject) => {
+    const timeoutPromise = jest.fn(() => {
+      return new Promise((resolve) => {
         setTimeout(() => {
           return resolve({ structured: 'data' });
         }, 500);
       });
     });
 
-    const locker = new Locking(timeoutPromise);
+    const locker = new LockingAsync(timeoutPromise);
     expect(await locker.get({ option: true }, 1, 'hello')).toEqual({ structured: 'data' });
   });
 
@@ -119,7 +118,7 @@ describe('Locking', () => {
       return Promise.resolve(`output of ${input}`);
     });
 
-    const locker = new Locking(stub, { max: 1 });
+    const locker = new LockingAsync(stub, { max: 1 });
     expect(await locker.get('hello')).toBe('output of hello');
     expect(await locker.get('world')).toBe('output of world');
     expect(await locker.get('hola')).toBe('output of hola');
@@ -134,7 +133,7 @@ describe('Locking', () => {
       return got(url).json();
     });
 
-    const cache = new Locking(httpFetch);
+    const cache = new LockingAsync(httpFetch);
     const responses = await Promise.all([
       cache.get('https://api.mapbox.com'),
       cache.get('https://api.mapbox.com'),

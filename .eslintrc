@@ -1,3 +1,14 @@
 {
-  "extends": "eslint-config-unstyled"
+  "extends": "@mapbox/eslint-config-mapbox",
+  "plugins": ["node", "jest"],
+  "parserOptions": {
+    "ecmaVersion": "latest"
+  },
+  "env": {
+    "es6": true,
+    "jest/globals": true
+  },
+  "rules": {
+    "no-async-promise-executor": "off"
+  }
 }
