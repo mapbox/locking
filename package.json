@@ -9,15 +9,17 @@
   },
   "main": "./index",
   "dependencies": {
-    "lru-cache": "^5.1.1"
+    "lru-cache": "^7.14.0",
+    "object-hash": "^3.0.0"
   },
   "devDependencies": {
     "eslint": "^2.11.1",
     "eslint-config-unstyled": "^1.1.0",
+    "jest": "^29.0.0",
     "tape": "^4.5.1"
   },
   "scripts": {
-    "test": "eslint index.js && tape test/*.test.js"
+    "test": "eslint index.js && jest test/*.test.js"
   },
   "repository": {
     "type": "git",
