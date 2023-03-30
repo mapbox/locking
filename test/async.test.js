@@ -1,7 +1,8 @@
 'use strict';
 
 const got = require('got');
-const { LockingAsync } = require('../index.js');
+const { LockingAsync }  = require('../index.js');
+// const LockingAsync = Locking.LockingAsync;
 
 const sleep = (time) => {
   return new Promise((resolve) => {

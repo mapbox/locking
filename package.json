@@ -1,6 +1,6 @@
 {
   "name": "@mapbox/locking",
-  "version": "3.4.0-dev2",
+  "version": "3.4.0-dev3",
   "description": "Read I/O locking using LRU cache",
   "author": {
     "name": "Mapbox",
