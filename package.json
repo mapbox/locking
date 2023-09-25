@@ -9,7 +9,7 @@
   },
   "main": "./index",
   "engines": {
-    "node": ">=14.16"
+    "node": ">=16"
   },
   "dependencies": {
     "lru-cache": "^7.14.0",
