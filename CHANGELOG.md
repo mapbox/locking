@@ -7,7 +7,7 @@
 - library now exports two items, `Locking` and `LockingAsync`
 - `Locking` function, which contains the same interface as previous versions
 - `LockingAsync` class, for managing async/promise functions of arbitrary parameters
-- update lur-cache 7.x, this includes updated options:
+- update lru-cache 7.x, this includes updated options:
   - `stale` is now `allowStale`
   - `maxAge` is now `ttl`
 - use jest as a test runner
