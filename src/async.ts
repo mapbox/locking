@@ -4,6 +4,15 @@ import { LRUCache } from 'lru-cache';
 import hash from 'object-hash';
 
 type HashKey = string;
+interface Stats {
+  activeLocks: number;
+  size: number;
+  locks: number;
+  miss: number;
+  hit: number;
+  refreshHit: number;
+  calls: number;
+}
 
 export class LockingAsync {
   /*
@@ -64,7 +73,7 @@ export class LockingAsync {
     });
   }
 
-  get stats() {
+  get stats(): Stats {
     const activeLocks =
       Object.keys(this.#locks).reduce((total, key) => {
         return (total += this.#locks[key].length);
@@ -77,7 +86,7 @@ export class LockingAsync {
     };
   }
 
-  async get(...args: any[]) {
+  async get(...args: any[]): Promise<any> {
     this.#stats.calls++;
     return new Promise(async (resolve, reject) => {
       let staleRefresh = false;
