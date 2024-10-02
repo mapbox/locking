@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.0.0
+
+- Convert to typescript
+- Test with node.js 20.x 
+- Replace TravisCI with GitHub Actions
+
 ## v4.0.0
 
 **BREAKING**

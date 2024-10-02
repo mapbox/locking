@@ -1,9 +1,11 @@
 'use strict';
 
-const LRU = require('lru-cache');
-const hash = require('object-hash');
+import { LRUCache } from 'lru-cache';
+import hash from 'object-hash';
 
-class LockingAsync {
+type HashKey = string;
+
+export class LockingAsync {
   /*
   temporary locker for holding resolve/rejects of
   concurrent cache misses for the same key
@@ -16,30 +18,35 @@ class LockingAsync {
     "1119717257625be99": [[resolve, reject], [resolve, reject], [resolve, reject]]
   }
   */
-  #locks;
+  #locks: Record<string, [Function, Function][]>;
   #stale;
   #stats;
+  cache: LRUCache<any, any, any>;
+  func: Function;
 
-  constructor(func, params) {
-    if (!func) throw new Error('Locking: locking class requires two arguments: function, params');
+  constructor(func: Function, params?: LRUCache.Options<any, any, any>) {
+    if (!func)
+      throw new Error(
+        'Locking: locking class requires two arguments: function, params',
+      );
     this.func = func;
-    this.cache = new LRU({ max: 1000, ...params });
+    this.cache = new LRUCache({ max: 1000, ...params });
     this.#locks = {};
-    this.#stale = this.cache.allowStale;
+    this.#stale = !!params?.allowStale;
     this.#stats = {
       locks: 0,
       miss: 0,
       hit: 0,
       refreshHit: 0,
-      calls: 0
+      calls: 0,
     };
   }
 
-  #createKey(args) {
+  #createKey(args: Record<any, any>) {
     return hash(args);
   }
 
-  #resolveLocks(key, result) {
+  #resolveLocks(key: HashKey, result: any) {
     const locks = this.#locks[key];
     if (!locks) return;
     delete this.#locks[key];
@@ -48,7 +55,7 @@ class LockingAsync {
     });
   }
 
-  #rejectLocks(key, err) {
+  #rejectLocks(key: HashKey, err: any) {
     const locks = this.#locks[key];
     if (!locks) return;
     delete this.#locks[key];
@@ -58,19 +65,19 @@ class LockingAsync {
   }
 
   get stats() {
-    const activeLocks = Object.keys(this.#locks).reduce((total, key) => {
-      return total += this.#locks[key].length;
-    }, 0, this) || 0;
+    const activeLocks =
+      Object.keys(this.#locks).reduce((total, key) => {
+        return (total += this.#locks[key].length);
+      }, 0) || 0;
 
     return {
       activeLocks,
       size: this.cache.size,
-      ...this.#stats
+      ...this.#stats,
     };
   }
 
-  async get() {
-    const args = [...arguments];
+  async get(...args: any[]) {
     this.#stats.calls++;
     return new Promise(async (resolve, reject) => {
       let staleRefresh = false;
@@ -122,5 +129,3 @@ class LockingAsync {
     });
   }
 }
-
-module.exports = LockingAsync;

@@ -1,10 +1,19 @@
-'use strict';
+import { LRUCache } from 'lru-cache';
 
-const loaders = [];
-const cachers = [];
-const LRU = require('lru-cache');
+interface CacheStats {
+  hit: number;
+  miss: number;
+  mchit: number;
+  mcmiss: number;
+}
+interface Cacher {
+  (id: any, callback: Function): void;
+  cacheStats: CacheStats;
+  cache: LRUCache<any, any, any>;
+}
 
-module.exports = locking;
+const loaders: Function[] = [];
+const cachers: Cacher[] = [];
 
 /**
  * Wraps any loader function of the form `loader(id, callback)` to use
@@ -16,27 +25,36 @@ module.exports = locking;
  * @returns {Function} a version of that function that locks on successive
  * simultaneous calls.
  */
-function locking(loader, options) {
+export function Locking(
+  loader: Function,
+  options?: LRUCache.Options<any, any, any>,
+): Cacher {
   const existing = loaders.indexOf(loader);
   if (existing !== -1) return cachers[existing];
 
   options = options || { max: 100, ttl: 30e3 };
 
-  const cache = new LRU(options);
+  const cache = new LRUCache(options);
   const locks = {};
-  const cacheStats = { hit:0, miss:0, mchit:0, mcmiss:0 };
-  const cacher = options.allowStale ?
-    createStaleCacher(cache, locks, cacheStats, loader) :
-    createCacher(cache, locks, cacheStats, loader);
+  const cacheStats = { hit: 0, miss: 0, mchit: 0, mcmiss: 0 };
+  const cacher: any = options.allowStale
+    ? createStaleCacher(cache, locks, cacheStats, loader)
+    : createCacher(cache, locks, cacheStats, loader);
   cacher.cacheStats = cacheStats;
   cacher.cache = cache;
   loaders.push(loader);
   cachers.push(cacher);
-  return cacher;
+  return cacher as Cacher;
 }
 
-function createStaleCacher(cache, locks, cacheStats, loader) {
-  return function(id, callback) {
+function createStaleCacher(
+  cache: LRUCache<any, any, any>,
+  locks: Record<string, Function[]>,
+  cacheStats: Record<any, any>,
+  loader: Function,
+): Function {
+  console.log('creating stale cacher');
+  return function (id: any, callback: Function) {
     // Stringify objects.
     const key = JSON.stringify(id);
 
@@ -47,13 +65,13 @@ function createStaleCacher(cache, locks, cacheStats, loader) {
       // The retrieved version of the object is not stale.
       if (cache.has(key)) {
         return callback(null, cached);
-      // The retrieved version of the object was stale: return it and
-      // cache a fresh version of the object in the background.
-      //
-      // 1. Return it
-      // 2. Set it again in the cache so calls to the loader continue
-      //    receiving the stale version until the fresh one is loaded
-      // 3. Continue onto loading logic
+        // The retrieved version of the object was stale: return it and
+        // cache a fresh version of the object in the background.
+        //
+        // 1. Return it
+        // 2. Set it again in the cache so calls to the loader continue
+        //    receiving the stale version until the fresh one is loaded
+        // 3. Continue onto loading logic
       } else {
         callback(null, cached);
         cache.set(key, cached);
@@ -66,7 +84,7 @@ function createStaleCacher(cache, locks, cacheStats, loader) {
       locks[key] = [callback];
     }
 
-    loader(id, (err, instance) => {
+    loader(id, (err: any, instance: any) => {
       if (!err && instance) {
         cacheStats.miss++;
         cache.set(key, instance);
@@ -83,8 +101,13 @@ function createStaleCacher(cache, locks, cacheStats, loader) {
   };
 }
 
-function createCacher(cache, locks, cacheStats, loader) {
-  return (id, callback) => {
+function createCacher(
+  cache: LRUCache<any, any, any>,
+  locks: Record<string, Function[]>,
+  cacheStats: Record<any, any>,
+  loader: Function,
+): Function {
+  return (id: any, callback: Function) => {
     // Stringify objects.
     const key = JSON.stringify(id);
 
@@ -101,7 +124,7 @@ function createCacher(cache, locks, cacheStats, loader) {
     // Create a new lock.
     locks[key] = [callback];
 
-    loader(id, (err, instance) => {
+    loader(id, (err: any, instance: any) => {
       if (!err && instance) {
         cacheStats.miss++;
         cache.set(key, instance);

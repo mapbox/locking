@@ -1,11 +1,15 @@
-'use strict';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+// @ts-ignore
+import { queue } from 'd3-queue';
+import { Locking } from '../src';
 
-const { Locking } = require('../index.js');
-const { queue } = require('d3-queue');
+afterEach(() => {
+  vi.clearAllTimers();
+});
 
 describe('Callback', () => {
   it('locking singletons', () => {
-    const testFunc = jest.fn((id, cb) => {
+    const testFunc = vi.fn((id: any, cb: Function) => {
       return cb(null, id);
     });
 
@@ -14,23 +18,23 @@ describe('Callback', () => {
   });
 
   it('accepts object as id', () => {
-    const testFunc = jest.fn((id, cb) => {
+    const testFunc = vi.fn((id: any, cb: Function) => {
       return cb(null, id);
     });
 
     const locker = Locking(testFunc);
-    locker({ pathname: '/test' }, (err, res) => {
+    locker({ pathname: '/test' }, (err: any, res: any) => {
       expect(res).toEqual({ pathname: '/test' });
     });
   });
 
   it('passes errors', () => {
-    const testFunc = jest.fn((id, cb) => {
+    const testFunc = vi.fn((id: any, cb: Function) => {
       return cb(new Error('test function fail'));
     });
 
     const locker = Locking(testFunc);
-    locker('id', (err, res) => {
+    locker('id', (err: any, res: any) => {
       expect(err).toBeInstanceOf(Error);
       expect(err.message).toEqual('test function fail');
       expect(res).toBeUndefined();
@@ -38,18 +42,20 @@ describe('Callback', () => {
   });
 
   it('does not cache errors', () => {
-    const testFunc = jest.fn()
-      .mockReturnValueOnce((id, cb) => {
+    const testFunc = vi
+      .fn()
+      .mockReturnValueOnce((id: any, cb: Function) => {
         return cb(new Error('test function fail'));
-      }).mockReturnValueOnce((id, cb) => {
+      })
+      .mockReturnValueOnce((id: any, cb: Function) => {
         return cb(null, `success with ${id}`);
       });
 
     const locker = Locking(testFunc);
-    locker('hello', (err) => {
+    locker('hello', (err: any) => {
       expect(err).toBeInstanceOf(Error);
 
-      locker('hello', (err, res) => {
+      locker('hello', (err: any, res: any) => {
         expect(err).toBeUndefined();
         expect(res).toEqual('success with hello');
       });
@@ -58,7 +64,7 @@ describe('Callback', () => {
 
   it('locks i/o for multiple concurrent calls to the same id', () => {
     let callCount = 0;
-    function asyncFunction(id, cb) {
+    function asyncFunction(id: any, cb: Function) {
       setTimeout(() => {
         callCount++;
         cb(null, id);
@@ -71,7 +77,7 @@ describe('Callback', () => {
       .defer(locker, 'hello')
       .defer(locker, 'hello')
       .defer(locker, 'hello')
-      .awaitAll((err) => {
+      .awaitAll((err: any) => {
         expect(err).toBeNull();
         expect(callCount).toBe(1);
       });
@@ -79,14 +85,14 @@ describe('Callback', () => {
 
   it('uses LRU for subsequent calls', () => {
     let counter = 0;
-    const testFunc = jest.fn((id, cb) => {
+    const testFunc = vi.fn((id: any, cb: Function) => {
       counter++;
       return cb(null, `success for ${id}, counter: ${counter}`);
     });
 
     const locker = Locking(testFunc);
     locker('hello', () => {
-      locker('hello', (err, result) => {
+      locker('hello', (err: any, result: any) => {
         expect(err).toBeFalsy();
         expect(result).toBe('success for hello, counter: 1');
         expect(testFunc.mock.calls.length).toBe(1);
@@ -96,14 +102,14 @@ describe('Callback', () => {
 
   it('uses LRU for subsequent calls', () => {
     let counter = 0;
-    const testFunc = jest.fn((id, cb) => {
+    const testFunc = vi.fn((id: any, cb: Function) => {
       counter++;
       return cb(null, `success for ${id}, counter: ${counter}`);
     });
 
     const locker = Locking(testFunc);
     locker('hello', () => {
-      locker('hello', (err, result) => {
+      locker('hello', (err: any, result: any) => {
         expect(err).toBeFalsy();
         expect(result).toBe('success for hello, counter: 1');
         expect(testFunc.mock.calls.length).toBe(1);
@@ -112,14 +118,14 @@ describe('Callback', () => {
   });
 
   it('call after ttl expires is a fresh call', () => {
-    jest.useFakeTimers();
-    const obj = { some: 'data' };
-    const testFunc = jest.fn((id, cb) => {
+    vi.useFakeTimers();
+    const obj: Record<any, any> = { some: 'data' };
+    const testFunc = vi.fn((id: any, cb: Function) => {
       return cb(null, obj);
     });
 
     const locker = Locking(testFunc, { ttl: 1e3, max: 10 }); // 1 second ttl
-    locker('id', (err, result) => {
+    locker('id', (err: any, result: any) => {
       expect(result).toEqual({ some: 'data' });
       expect(testFunc.mock.calls.length).toBe(1);
 
@@ -127,42 +133,42 @@ describe('Callback', () => {
       obj.more = 'info';
 
       // wait for ttl to expire
-      jest.runAllTimers();
+      vi.runAllTimers();
       setTimeout(() => {
-        locker('id', (err, result) => {
+        locker('id', (err: any, result: any) => {
           expect(err).toBeFalsy();
           expect(result).toEqual({ some: 'data', more: 'info' });
           expect(testFunc.mock.calls.length).toBe(2);
-          jest.useRealTimers();
+          vi.useRealTimers();
         });
       }, 1e3);
     });
   });
 
   it('allowStale: true', () => {
-    jest.useFakeTimers();
-    const obj = { some: 'data' };
-    const staleFunc = jest.fn((id, cb) => {
+    vi.useFakeTimers();
+    const obj: Record<any, any> = { some: 'data' };
+    const staleFunc = vi.fn((id: any, cb: Function) => {
       cb(null, obj);
     });
 
     const locker = Locking(staleFunc, { ttl: 500, max: 10, allowStale: true });
 
-    locker('id', (err, result1) => {
+    locker('id', (err: any, result1) => {
       expect(result1).toMatchObject({ some: 'data' });
       expect(staleFunc.mock.calls.length).toBe(1);
       obj.more = 'info';
 
-      locker('id', (err, result2) => {
+      locker('id', (err: any, result2) => {
         expect(result2).toMatchObject({ some: 'data' });
         expect(staleFunc.mock.calls.length).toBe(1);
 
-        jest.runAllTimers();
+        vi.runAllTimers();
         setTimeout(() => {
-          locker('id', (err, result3) => {
+          locker('id', (err: any, result3) => {
             expect(result3).toMatchObject({ some: 'data', more: 'info' });
             expect(staleFunc.mock.calls.length).toBe(2);
-            jest.useRealTimers();
+            vi.useRealTimers();
           });
         }, 2000);
       });
