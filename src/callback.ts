@@ -53,7 +53,6 @@ function createStaleCacher(
   cacheStats: Record<any, any>,
   loader: Function,
 ): Function {
-  console.log('creating stale cacher');
   return function (id: any, callback: Function) {
     // Stringify objects.
     const key = JSON.stringify(id);
