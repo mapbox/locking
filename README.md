@@ -41,7 +41,7 @@ Constructor for locking promise or async functions in the form of `function(...a
 import { LockingAsync } from '@mapbox/locking';
 import got from 'got';
 
-const jsonApi = new Locking((url) => {
+const jsonApi = new LockingAsync((url) => {
   return got(url).json();
 }, options);
 
