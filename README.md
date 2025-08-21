@@ -8,6 +8,10 @@ Wrap any callback or async function to use an LRU cache and prevent (lock) async
 npm install --save @mapbox/locking
 ```
 
+# Disclaimer
+
+This package is a thin wrapper around [node-lru-cache](https://github.com/isaacs/node-lru-cache), which does not impose strict protections around memory usage, other than the built-in `max`, `maxSize`, and `ttl` options (for which this package configures some sensible defaults). Use of this package should include careful consideration for the key/value design along with the aforementioned limits to ensure cache memory usage remains within the desired range. See `node-lru-cache`'s [Storage Bounds Safety](https://github.com/isaacs/node-lru-cache?tab=readme-ov-file#storage-bounds-safety) documentation for some helpful tips.
+
 # Usage
 
 ```js
