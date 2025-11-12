@@ -1,5 +1,8 @@
 # Changelog
 
+## v5.0.1
+- Upgrade vitest to v4 to address CVE-2025-24964
+
 ## v5.0.0
 
 - Convert to typescript
